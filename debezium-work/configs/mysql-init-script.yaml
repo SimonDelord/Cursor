@@ -12,7 +12,7 @@ data:
     
     -- Grant all necessary permissions for Debezium MySQL connector
     GRANT SELECT, RELOAD, SHOW DATABASES, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'debezium'@'%';
-    GRANT ALL PRIVILEGES ON test.* TO 'debezium'@'%';
+    GRANT ALL PRIVILEGES ON trucks.* TO 'debezium'@'%';
     
     -- Flush privileges to ensure they take effect
     FLUSH PRIVILEGES;
@@ -23,35 +23,35 @@ data:
     SHOW VARIABLES LIKE 'log_bin';
     SHOW VARIABLES LIKE 'binlog_format';
 
-  02-create-sample-data.sql: |
-    -- Switch to test database
-    USE test;
+  02-create-trucks-database.sql: |
+    -- Create trucks database for CDC demonstration
+    CREATE DATABASE IF NOT EXISTS trucks;
+    USE trucks;
     
-    -- Create customers table
-    CREATE TABLE IF NOT EXISTS customers (
+    -- Create location table for truck tracking
+    CREATE TABLE IF NOT EXISTS location (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        first_name VARCHAR(50) NOT NULL,
-        name VARCHAR(100) NOT NULL,
-        email VARCHAR(100) UNIQUE NOT NULL,
+        latitude DECIMAL(10, 8) NOT NULL,
+        longitude DECIMAL(11, 8) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_email (email),
-        INDEX idx_name (name)
+        INDEX idx_coordinates (latitude, longitude),
+        INDEX idx_created_at (created_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     
-    -- Insert initial 10 customers
-    INSERT INTO customers (first_name, name, email) VALUES
-    ('John', 'Doe', 'john.doe@example.com'),
-    ('Jane', 'Smith', 'jane.smith@example.com'),
-    ('Michael', 'Johnson', 'michael.johnson@example.com'),
-    ('Sarah', 'Williams', 'sarah.williams@example.com'),
-    ('David', 'Brown', 'david.brown@example.com'),
-    ('Emily', 'Davis', 'emily.davis@example.com'),
-    ('Robert', 'Miller', 'robert.miller@example.com'),
-    ('Lisa', 'Wilson', 'lisa.wilson@example.com'),
-    ('James', 'Moore', 'james.moore@example.com'),
-    ('Ashley', 'Taylor', 'ashley.taylor@example.com');
+    -- Insert initial 10 truck locations (major US cities)
+    INSERT INTO location (id, latitude, longitude) VALUES
+    (1, 40.7128, -74.0060),   -- New York City
+    (2, 34.0522, -118.2437),  -- Los Angeles
+    (3, 41.8781, -87.6298),   -- Chicago
+    (4, 29.7604, -95.3698),   -- Houston
+    (5, 33.4484, -112.0740),  -- Phoenix
+    (6, 39.9526, -75.1652),   -- Philadelphia
+    (7, 29.4241, -98.4936),   -- San Antonio
+    (8, 32.7767, -96.7970),   -- Dallas
+    (9, 37.3382, -121.8863),  -- San Jose
+    (10, 30.3322, -81.6557);  -- Jacksonville
     
-    -- Verify data was inserted
-    SELECT COUNT(*) as initial_customer_count FROM customers;
-    SELECT 'Sample data loaded successfully' as status;
+    -- Verify truck location data was inserted
+    SELECT COUNT(*) as initial_truck_count FROM location;
+    SELECT 'Truck location data loaded successfully' as status;
