@@ -1,9 +1,9 @@
 ---
-# Debezium MySQL Connector for trucks database
+# Fresh Debezium MySQL Connector for demo.trucks.location topic
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaConnector
 metadata:
-  name: trucks-debezium-connector
+  name: demo-trucks-connector
   namespace: debezium-example
   labels:
     strimzi.io/cluster: debezium-connect-cluster
@@ -16,22 +16,22 @@ spec:
     database.port: "3306"
     database.user: debezium
     database.password: debezium
-    database.server.id: "2001"
-    database.server.name: trucks-mysql-server
+    database.server.id: "3001"
+    database.server.name: demo-mysql-server
     
     # Database and table filtering - Focus on trucks database
     database.include.list: trucks
     table.include.list: trucks.location
     
-    # Topic configuration
-    topic.prefix: trucks
+    # Topic configuration - NEW PREFIX: demo
+    topic.prefix: demo
     
-    # Schema history configuration
+    # Schema history configuration - NEW TOPIC
     schema.history.internal.kafka.bootstrap.servers: debezium-cluster-kafka-bootstrap:9092
-    schema.history.internal.kafka.topic: trucks-schema-history
+    schema.history.internal.kafka.topic: demo-schema-history
     
-    # Snapshot configuration - use schema_only_recovery for fresh start
-    snapshot.mode: schema_only_recovery
+    # Snapshot configuration - initial snapshot for fresh start
+    snapshot.mode: initial
     snapshot.locking.mode: minimal
     
     # GTID configuration - allow both GTID and binlog position
@@ -57,7 +57,7 @@ spec:
     
     # Heartbeat configuration
     heartbeat.interval.ms: "10000"
-    heartbeat.topics.prefix: __trucks-heartbeat
+    heartbeat.topics.prefix: __demo-heartbeat
     
     # Message key configuration - use id as the key
     message.key.columns: trucks.location:id
