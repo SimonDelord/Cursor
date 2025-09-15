@@ -84,7 +84,52 @@ oc exec -it deployment/mysql -n debezium-example -- \
   mysql -u root -pdebezium123 -e "SHOW GRANTS FOR 'debezium'@'%';"
 ```
 
-### 5. KafkaConnect Build Failures
+### 5. Base64 Encoded Coordinates (Critical Issue)
+
+**Problem**: Latitude and longitude appear as base64 strings instead of readable decimals
+
+**Example of the issue**:
+```json
+{
+  "latitude": "ASM1QWA=",
+  "longitude": "DgUsIA=="
+}
+```
+
+**Root Cause**: Debezium's default behavior encodes DECIMAL fields as binary data when schema is enabled.
+
+**Solution**: Add `decimal.handling.mode: "string"` to the connector configuration:
+
+```yaml
+config:
+  # ... other settings ...
+  decimal.handling.mode: "string"
+```
+
+**Result after fix**:
+```json
+{
+  "latitude": "40.71280000",
+  "longitude": "-74.00600000"
+}
+```
+
+**Additional steps**:
+1. Update connector configuration
+2. Delete and recreate the connector
+3. Clear existing topic data if needed (coordinates will remain base64 encoded)
+
+```bash
+# Update and restart connector
+oc apply -f configs/demo-trucks-connector.yaml
+
+# Optional: Clear topic to start fresh
+oc exec -n debezium-example debezium-cluster-kafka-0 -- \
+  bin/kafka-topics.sh --delete --bootstrap-server localhost:9092 \
+  --topic demo.trucks.location
+```
+
+### 6. KafkaConnect Build Failures
 
 **Error**: Build pod in `Error` or `Failed` state
 

@@ -173,7 +173,38 @@ config:
   topic.prefix: trucks
   snapshot.mode: initial
   schema.history.internal.kafka.topic: trucks-schema-history
+  
+  # CRITICAL: Prevent base64 encoding of decimal coordinates
+  decimal.handling.mode: "string"
 ```
+
+### 🔑 Important: Decimal Field Handling
+
+**To avoid base64 encoding of latitude/longitude coordinates**, you must include:
+
+```yaml
+decimal.handling.mode: "string"
+```
+
+**Without this setting**, decimal fields (DECIMAL columns in MySQL) will be encoded as base64 strings in Kafka messages, making coordinates unreadable:
+
+❌ **Bad (base64 encoded)**:
+```json
+{
+  "latitude": "ASM1QWA=",
+  "longitude": "DgUsIA=="
+}
+```
+
+✅ **Good (readable decimals)**:
+```json
+{
+  "latitude": "40.71280000",
+  "longitude": "-74.00600000"
+}
+```
+
+This parameter forces Debezium to convert DECIMAL fields to string representations instead of precise binary encoding, making the data human-readable and compatible with visualization tools like Grafana.
 
 ## 🔍 Monitoring and Troubleshooting
 
