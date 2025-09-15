@@ -1,0 +1,76 @@
+---
+# Simple KafkaConnect using pre-built image (no build required)
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnect
+metadata:
+  name: debezium-connect-cluster
+  namespace: debezium-example
+  annotations:
+    strimzi.io/use-connector-resources: "true"
+spec:
+  version: 3.9.0
+  replicas: 1
+  
+  # Build configuration with Debezium MySQL connector
+  build:
+    output:
+      type: imagestream
+      image: debezium-connect:latest
+    plugins:
+      - name: debezium-mysql-connector
+        artifacts:
+          - type: zip
+            url: https://repo1.maven.org/maven2/io/debezium/debezium-connector-mysql/3.2.1.Final/debezium-connector-mysql-3.2.1.Final-plugin.zip
+  
+  # Bootstrap servers pointing to the Kafka cluster
+  bootstrapServers: debezium-cluster-kafka-bootstrap:9092
+  
+  # Kafka Connect configuration
+  config:
+    group.id: debezium-connect-cluster
+    offset.storage.topic: debezium-connect-offsets
+    offset.storage.replication.factor: 1
+    offset.storage.partitions: 25
+    
+    config.storage.topic: debezium-connect-configs
+    config.storage.replication.factor: 1
+    
+    status.storage.topic: debezium-connect-status
+    status.storage.replication.factor: 1
+    status.storage.partitions: 5
+    
+    # JSON converters for keys and values
+    key.converter: org.apache.kafka.connect.json.JsonConverter
+    value.converter: org.apache.kafka.connect.json.JsonConverter
+    key.converter.schemas.enable: true
+    value.converter.schemas.enable: true
+    
+    # Internal key and value converters
+    internal.key.converter: org.apache.kafka.connect.json.JsonConverter
+    internal.value.converter: org.apache.kafka.connect.json.JsonConverter
+    internal.key.converter.schemas.enable: false
+    internal.value.converter.schemas.enable: false
+    
+    # Connector client override policy
+    connector.client.config.override.policy: All
+    
+    # Producer configuration
+    producer.compression.type: snappy
+    producer.max.request.size: 1048576
+    
+    # Consumer configuration
+    consumer.max.poll.records: 500
+      
+  # Resources
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 250m
+    limits:
+      memory: 2Gi
+      cpu: 500m
+      
+  # JVM options
+  jvmOptions:
+    "-Xmx": "1g"
+    "-Xms": "512m"

@@ -1,0 +1,144 @@
+---
+# MySQL ConfigMap with Debezium-optimized configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-config
+  namespace: debezium-example
+data:
+  my.cnf: |
+    [mysqld]
+    # Basic settings
+    bind-address = 0.0.0.0
+    port = 3306
+    
+    # Binary logging and replication (essential for Debezium)
+    server-id = 1
+    log-bin = mysql-bin
+    binlog-format = ROW
+    binlog-row-image = FULL
+    expire-logs-days = 10
+    
+    # GTID settings (recommended for Debezium)
+    gtid-mode = ON
+    enforce-gtid-consistency = ON
+    
+    # Performance and connection settings
+    max_connections = 200
+    innodb_buffer_pool_size = 256M
+    innodb_log_file_size = 64M
+    
+    # Character set
+    character-set-server = utf8mb4
+    collation-server = utf8mb4_unicode_ci
+    
+    # Skip reverse DNS lookups
+    skip-name-resolve = 1
+
+---
+# MySQL Secret for passwords
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+  namespace: debezium-example
+type: Opaque
+data:
+  # root password: debezium123
+  mysql-root-password: ZGViZXppdW0xMjM=
+  # debezium user password: debezium
+  mysql-debezium-password: ZGViZXppdW0=
+
+---
+# MySQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: debezium-example
+spec:
+  selector:
+    app: mysql
+  ports:
+    - port: 3306
+      targetPort: 3306
+      name: mysql
+  type: ClusterIP
+
+---
+# MySQL Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: debezium-example
+  labels:
+    app: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        ports:
+        - containerPort: 3306
+          name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mysql-root-password
+        - name: MYSQL_DATABASE
+          value: "test"
+        - name: MYSQL_USER
+          value: "debezium"
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mysql-debezium-password
+        volumeMounts:
+        - name: mysql-config-volume
+          mountPath: /etc/mysql/conf.d
+        - name: mysql-initdb-volume
+          mountPath: /docker-entrypoint-initdb.d
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+            - mysqladmin
+            - ping
+            - -h
+            - localhost
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - mysqladmin
+            - ping
+            - -h
+            - localhost
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: mysql-config-volume
+        configMap:
+          name: mysql-config
+      - name: mysql-initdb-volume
+        configMap:
+          name: mysql-init-script
