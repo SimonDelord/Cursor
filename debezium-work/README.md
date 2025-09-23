@@ -98,7 +98,7 @@ oc get kafkaconnector trucks-debezium-connector -n debezium-example
 oc exec -n debezium-example debezium-cluster-kafka-0 -- \
   bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
-  --topic trucks.trucks.location
+  --topic realtime.trucks.location
 ```
 
 ### 7. Test Real-time Data Capture
@@ -170,20 +170,20 @@ config:
   database.hostname: mysql
   database.include.list: trucks
   table.include.list: trucks.location
-  topic.prefix: trucks
+  topic.prefix: realtime
   snapshot.mode: initial
   schema.history.internal.kafka.topic: trucks-schema-history
   
-  # CRITICAL: Prevent base64 encoding of decimal coordinates
-  decimal.handling.mode: "string"
+  # CRITICAL: Convert decimal coordinates to numeric values
+  decimal.handling.mode: "double"
 ```
 
 ### 🔑 Important: Decimal Field Handling
 
-**To avoid base64 encoding of latitude/longitude coordinates**, you must include:
+**To convert decimal coordinates to proper numeric values**, you must include:
 
 ```yaml
-decimal.handling.mode: "string"
+decimal.handling.mode: "double"
 ```
 
 **Without this setting**, decimal fields (DECIMAL columns in MySQL) will be encoded as base64 strings in Kafka messages, making coordinates unreadable:
@@ -196,15 +196,15 @@ decimal.handling.mode: "string"
 }
 ```
 
-✅ **Good (readable decimals)**:
+✅ **Good (numeric values)**:
 ```json
 {
-  "latitude": "40.71280000",
-  "longitude": "-74.00600000"
+  "latitude": -22.77361111,
+  "longitude": 117.76194444
 }
 ```
 
-This parameter forces Debezium to convert DECIMAL fields to string representations instead of precise binary encoding, making the data human-readable and compatible with visualization tools like Grafana.
+This parameter converts DECIMAL fields to double precision numeric values instead of binary encoding, making the coordinates proper numbers for mathematical operations and compatible with downstream systems like MQTT bridges and visualization tools.
 
 ## 🔍 Monitoring and Troubleshooting
 
@@ -241,9 +241,9 @@ When everything is working correctly, you should see:
 3. **KafkaConnect**: `READY: True` with custom image built
 4. **Connector**: `READY: True` with tasks in `RUNNING` state
 5. **Topics Created**:
-   - `trucks.trucks.location` (data changes)
+   - `realtime.trucks.location` (data changes)
    - `trucks-schema-history` (schema tracking)
-   - `__debezium-heartbeat.trucks` (heartbeat monitoring)
+   - `__debezium-heartbeat.realtime` (heartbeat monitoring)
 
 ## 🎉 Real-time Data Flow
 
@@ -251,7 +251,7 @@ When you insert new truck locations:
 
 ```sql
 INSERT INTO location (id, latitude, longitude) VALUES 
-(21, 40.7128, -74.0060);  -- New York City
+(21, -22.77361111, 117.76194444);  -- Western Australia
 ```
 
 You'll immediately see a CDC event:
@@ -263,8 +263,8 @@ You'll immediately see a CDC event:
   "before": null,
   "after": {
     "id": 21,
-    "latitude": 40.7128,
-    "longitude": -74.0060,
+    "latitude": -22.77361111,
+    "longitude": 117.76194444,
     "created_at": "2024-09-15T10:30:00Z",
     "updated_at": "2024-09-15T10:30:00Z"
   }
