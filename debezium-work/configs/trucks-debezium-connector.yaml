@@ -17,14 +17,14 @@ spec:
     database.user: debezium
     database.password: debezium
     database.server.id: "2001"
-    database.server.name: trucks-mysql-server
+    database.server.name: realtime
     
     # Database and table filtering - Focus on trucks database
     database.include.list: trucks
     table.include.list: trucks.location
     
     # Topic configuration
-    topic.prefix: trucks
+    topic.prefix: realtime
     
     # Schema history configuration
     schema.history.internal.kafka.bootstrap.servers: debezium-cluster-kafka-bootstrap:9092
@@ -65,5 +65,5 @@ spec:
     # Include all location columns
     column.include.list: "trucks.location.id,trucks.location.latitude,trucks.location.longitude,trucks.location.created_at,trucks.location.updated_at"
     
-    # Force decimal fields to be converted as strings to avoid base64 encoding
-    decimal.handling.mode: "string"
+    # Convert decimal fields to double precision for numeric processing
+    decimal.handling.mode: "double"

@@ -1,0 +1,102 @@
+---
+# ServiceAccount for Kafka-MQTT Bridge
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kafka-mqtt-bridge
+  namespace: mqtt
+
+---
+# ClusterRoleBinding for Kafka-MQTT Bridge
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kafka-mqtt-bridge-cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: kafka-mqtt-bridge
+  namespace: mqtt
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# BuildConfig for Kafka-MQTT Bridge
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: kafka-mqtt-bridge-build
+  namespace: mqtt
+spec:
+  source:
+    type: Binary
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: Dockerfile.mqtt-bridge
+  output:
+    to:
+      kind: ImageStreamTag
+      name: kafka-mqtt-bridge:latest
+
+---
+# ImageStream for Kafka-MQTT Bridge
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: kafka-mqtt-bridge
+  namespace: mqtt
+
+---
+# Kafka-MQTT Bridge Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-mqtt-bridge
+  namespace: mqtt
+  labels:
+    app: kafka-mqtt-bridge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-mqtt-bridge
+  template:
+    metadata:
+      labels:
+        app: kafka-mqtt-bridge
+    spec:
+      serviceAccountName: kafka-mqtt-bridge
+      containers:
+      - name: kafka-mqtt-bridge
+        image: image-registry.openshift-image-registry.svc:5000/mqtt/kafka-mqtt-bridge:latest
+        env:
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "debezium-cluster-kafka-bootstrap.debezium-example.svc:9092"
+        - name: KAFKA_TOPIC
+          value: "demo.trucks.location"
+        - name: KAFKA_GROUP_ID
+          value: "truck-mqtt-bridge"
+        - name: MQTT_BROKER
+          value: "mosquitto.mqtt.svc"
+        - name: MQTT_PORT
+          value: "1883"
+        - name: MQTT_TOPIC_PREFIX
+          value: "trucks"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "import sys; sys.exit(0)"
+          initialDelaySeconds: 30
+          periodSeconds: 30
+

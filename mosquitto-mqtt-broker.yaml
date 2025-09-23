@@ -1,0 +1,121 @@
+---
+# Eclipse Mosquitto MQTT Broker Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mosquitto-config
+  namespace: mqtt
+data:
+  mosquitto.conf: |
+    # Basic MQTT broker configuration
+    listener 1883
+    protocol mqtt
+    
+    # WebSocket listener for web clients
+    listener 9001
+    protocol websockets
+    
+    # Allow anonymous connections for testing
+    allow_anonymous true
+    
+    # Logging
+    log_dest stdout
+    log_type all
+    
+    # Persistence
+    persistence true
+    persistence_location /mosquitto/data/
+    
+    # Security settings (relaxed for demo)
+    max_connections -1
+    max_inflight_messages 100
+
+---
+# Mosquitto MQTT Broker Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mosquitto
+  namespace: mqtt
+  labels:
+    app: mosquitto
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mosquitto
+  template:
+    metadata:
+      labels:
+        app: mosquitto
+    spec:
+      containers:
+      - name: mosquitto
+        image: eclipse-mosquitto:2.0.18
+        ports:
+        - containerPort: 1883
+          name: mqtt
+        - containerPort: 9001
+          name: websocket
+        volumeMounts:
+        - name: mosquitto-config-volume
+          mountPath: /mosquitto/config
+        - name: mosquitto-data
+          mountPath: /mosquitto/data
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          tcpSocket:
+            port: 1883
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          tcpSocket:
+            port: 1883
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: mosquitto-config-volume
+        configMap:
+          name: mosquitto-config
+      - name: mosquitto-data
+        emptyDir: {}
+
+---
+# Mosquitto Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mosquitto
+  namespace: mqtt
+spec:
+  selector:
+    app: mosquitto
+  ports:
+    - port: 1883
+      targetPort: 1883
+      name: mqtt
+    - port: 9001
+      targetPort: 9001
+      name: websocket
+  type: ClusterIP
+
+---
+# Mosquitto Route for external access
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: mosquitto-websocket
+  namespace: mqtt
+spec:
+  to:
+    kind: Service
+    name: mosquitto
+  port:
+    targetPort: websocket
+
