@@ -8,6 +8,7 @@ import json
 import logging
 import time
 import os
+import uuid
 from datetime import datetime
 from typing import Dict, Any, Optional
 
@@ -47,7 +48,7 @@ class KafkaToMQTTBridge:
                 KAFKA_TOPIC,
                 bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS.split(','),
                 group_id=KAFKA_GROUP_ID,
-                value_deserializer=lambda x: json.loads(x.decode('utf-8')),
+                value_deserializer=lambda x: json.loads(x.decode('utf-8')) if x is not None else None,
                 auto_offset_reset='latest',  # Only consume new messages
                 enable_auto_commit=True,
                 auto_commit_interval_ms=1000
@@ -60,17 +61,23 @@ class KafkaToMQTTBridge:
     def _setup_mqtt(self):
         """Setup MQTT client"""
         try:
-            self.mqtt_client = mqtt.Client(client_id="kafka-mqtt-bridge")
+            # Generate unique client ID to avoid conflicts
+            client_id = f"kafka-mqtt-bridge-{str(uuid.uuid4())[:8]}"
+            
+            self.mqtt_client = mqtt.Client(client_id=client_id)
             self.mqtt_client.on_connect = self._on_mqtt_connect
             self.mqtt_client.on_disconnect = self._on_mqtt_disconnect
             self.mqtt_client.on_publish = self._on_mqtt_publish
             
-            logger.info(f"Connecting to MQTT broker: {MQTT_BROKER}:{MQTT_PORT}")
+            # Set reconnect delay and max attempts
+            self.mqtt_client.reconnect_delay_set(min_delay=1, max_delay=120)
+            
+            logger.info(f"Connecting to MQTT broker: {MQTT_BROKER}:{MQTT_PORT} with client ID: {client_id}")
             self.mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
             self.mqtt_client.loop_start()
             
             # Wait for connection
-            time.sleep(2)
+            time.sleep(3)
             
         except Exception as e:
             logger.error(f"Failed to setup MQTT client: {e}")
@@ -87,7 +94,11 @@ class KafkaToMQTTBridge:
     def _on_mqtt_disconnect(self, client, userdata, rc):
         """MQTT disconnection callback"""
         self.connected = False
-        logger.warning(f"Disconnected from MQTT broker with result code {rc}")
+        if rc != 0:
+            logger.warning(f"Unexpected disconnection from MQTT broker with result code {rc}")
+            logger.info("MQTT client will attempt to reconnect automatically")
+        else:
+            logger.info("MQTT client disconnected gracefully")
 
     def _on_mqtt_publish(self, client, userdata, mid):
         """MQTT publish callback"""
@@ -96,6 +107,11 @@ class KafkaToMQTTBridge:
     def _extract_truck_data(self, kafka_message: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Extract truck location data from Kafka CDC message"""
         try:
+            # Handle tombstone records (None values)
+            if kafka_message is None:
+                logger.debug("Skipping tombstone record (None message)")
+                return None
+                
             payload = kafka_message.get('payload', {})
             operation = payload.get('op', '')
             
@@ -133,6 +149,11 @@ class KafkaToMQTTBridge:
     def _publish_to_mqtt(self, truck_data: Dict[str, Any]):
         """Publish truck location data to MQTT topics"""
         try:
+            # Check if MQTT client is connected before publishing
+            if not self.connected:
+                logger.warning(f"MQTT not connected, skipping truck {truck_data.get('truck_id', 'unknown')}")
+                return
+            
             truck_id = truck_data['truck_id']
             
             # Create different MQTT topics for different data aspects
@@ -153,14 +174,19 @@ class KafkaToMQTTBridge:
             }
             
             # Publish to each topic
+            published_count = 0
             for topic, data in topics.items():
                 payload = json.dumps(data)
                 result = self.mqtt_client.publish(topic, payload, qos=1)
                 
                 if result.rc == mqtt.MQTT_ERR_SUCCESS:
-                    logger.info(f"Published truck {truck_id} to {topic}")
+                    logger.info(f"Published truck {truck_id} data to {topic}")
+                    published_count += 1
                 else:
-                    logger.error(f"Failed to publish to {topic}: {result.rc}")
+                    logger.error(f"Failed to publish to {topic}: error code {result.rc}")
+            
+            if published_count > 0:
+                logger.info(f"Successfully published truck {truck_id} to {published_count} MQTT topics")
             
         except Exception as e:
             logger.error(f"Error publishing to MQTT: {e}")

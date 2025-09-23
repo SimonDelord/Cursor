@@ -157,23 +157,25 @@ The system includes 20 truck locations from the Pilbara mining region:
 - **Source**: Converted from DMS (Degrees/Minutes/Seconds) to decimal degrees
 - **Precision**: 8 decimal places (~1mm accuracy)
 
-See [`truck-coordinates.md`](truck-coordinates.md) for complete coordinate data and conversion details.
+See [`data/coordinates/truck-coordinates.md`](data/coordinates/truck-coordinates.md) for complete coordinate data and conversion details.
+
+📁 **Repository Structure**: See [`STRUCTURE.md`](STRUCTURE.md) for detailed folder organization.
 
 #### Key Files
 
 **Configuration:**
 - `debezium-work/configs/trucks-debezium-connector.yaml` - CDC connector setup
-- `mosquitto-mqtt-broker.yaml` - MQTT broker deployment
-- `kafka-mqtt-bridge-deployment.yaml` - Bridge service deployment
+- `mqtt/configs/mosquitto-mqtt-broker.yaml` - MQTT broker deployment
+- `mqtt/configs/kafka-mqtt-bridge-deployment.yaml` - Bridge service deployment
 
 **Data Processing:**
-- `kafka-mqtt-bridge.py` - Kafka to MQTT message bridge
-- `kafka-to-influx-consumer.py` - Kafka to InfluxDB consumer
-- `convert_coordinates.py` - DMS to decimal coordinate converter
+- `mqtt/bridge/kafka-mqtt-bridge.py` - Kafka to MQTT message bridge
+- `kafka-components/kafka-to-influx-consumer.py` - Kafka to InfluxDB consumer
+- `data/coordinates/convert_coordinates.py` - DMS to decimal coordinate converter
 
 **Sample Data:**
-- `add_western_australia_trucks_batch2.sql` - 20 Pilbara truck locations
-- `truck-coordinates.md` - Complete coordinate reference
+- `data/sql-scripts/add_western_australia_trucks_batch2.sql` - 20 Pilbara truck locations
+- `data/coordinates/truck-coordinates.md` - Complete coordinate reference
 
 #### Running the System
 
@@ -193,19 +195,19 @@ kubectl apply -f debezium-work/configs/kafka-cluster.yaml
 kubectl apply -f debezium-work/configs/mysql-deployment.yaml
 
 # Deploy MQTT broker
-kubectl apply -f mosquitto-mqtt-broker.yaml
+kubectl apply -f mqtt/configs/mosquitto-mqtt-broker.yaml
 
 # Deploy CDC connector
 kubectl apply -f debezium-work/configs/trucks-debezium-connector.yaml
 
 # Deploy message bridge
-kubectl apply -f kafka-mqtt-bridge-deployment.yaml
+kubectl apply -f mqtt/configs/kafka-mqtt-bridge-deployment.yaml
 ```
 
 **Add Sample Data:**
 ```bash
 # Load Western Australia truck coordinates
-kubectl exec -i mysql-pod -- mysql -u root -p < add_western_australia_trucks_batch2.sql
+kubectl exec -i mysql-pod -- mysql -u root -p < data/sql-scripts/add_western_australia_trucks_batch2.sql
 ```
 
 #### Monitoring & Testing
@@ -219,7 +221,7 @@ kubectl exec kafka-pod -- bin/kafka-console-consumer.sh \
 **Monitor MQTT Topics:**
 ```bash
 # Install paho-mqtt: pip install paho-mqtt
-python3 mqtt_subscriber_test.py
+python3 mqtt/tests/mqtt_subscriber_test.py
 ```
 
 **View Metrics:**

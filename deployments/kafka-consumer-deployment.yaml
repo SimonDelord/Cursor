@@ -1,0 +1,94 @@
+fa---
+# ServiceAccount for Kafka Consumer
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kafka-consumer
+  namespace: debezium-example
+
+---
+# ClusterRoleBinding for Kafka Consumer (cluster-admin rights)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kafka-consumer-cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: kafka-consumer
+  namespace: debezium-example
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# BuildConfig for Kafka Consumer
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: kafka-consumer-build
+  namespace: debezium-example
+spec:
+  source:
+    type: Binary
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: Dockerfile.consumer
+  output:
+    to:
+      kind: ImageStreamTag
+      name: kafka-consumer:latest
+
+---
+# ImageStream for Kafka Consumer
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: kafka-consumer
+  namespace: debezium-example
+
+---
+# Kafka Consumer Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-consumer
+  namespace: debezium-example
+  labels:
+    app: kafka-consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-consumer
+  template:
+    metadata:
+      labels:
+        app: kafka-consumer
+    spec:
+      serviceAccountName: kafka-consumer
+      containers:
+      - name: kafka-consumer
+        image: image-registry.openshift-image-registry.svc:5000/debezium-example/kafka-consumer:latest
+        env:
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "debezium-cluster-kafka-bootstrap:9092"
+        - name: KAFKA_TOPIC
+          value: "trucks.trucks.location"
+        - name: INFLUXDB_URL
+          value: "http://influxdb:8086"
+        - name: INFLUXDB_TOKEN
+          value: "trucks-admin-token-12345"
+        - name: INFLUXDB_ORG
+          value: "trucks"
+        - name: INFLUXDB_BUCKET
+          value: "locations"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+

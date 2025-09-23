@@ -235,3 +235,4 @@ Each CDC event contains:
 - Audit and compliance logging
 
 This architecture provides a robust foundation for change data capture with MySQL and Kafka, suitable for both development and production environments with appropriate scaling and security enhancements.
+

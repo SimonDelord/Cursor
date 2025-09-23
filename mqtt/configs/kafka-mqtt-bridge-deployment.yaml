@@ -75,7 +75,7 @@ spec:
         - name: KAFKA_BOOTSTRAP_SERVERS
           value: "debezium-cluster-kafka-bootstrap.debezium-example.svc:9092"
         - name: KAFKA_TOPIC
-          value: "demo.trucks.location"
+          value: "realtime.trucks.location"
         - name: KAFKA_GROUP_ID
           value: "truck-mqtt-bridge"
         - name: MQTT_BROKER

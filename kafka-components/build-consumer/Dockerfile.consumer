@@ -1,0 +1,12 @@
+FROM python:3.11-slim
+
+# Install required packages
+COPY requirements.txt /app/
+WORKDIR /app
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy consumer script
+COPY kafka-to-influx-consumer.py /app/
+
+# Run the consumer
+CMD ["python", "kafka-to-influx-consumer.py"]

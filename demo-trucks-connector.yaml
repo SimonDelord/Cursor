@@ -67,3 +67,4 @@ spec:
     
     # Force decimal fields to be converted as strings to avoid base64 encoding
     decimal.handling.mode: "string"
+

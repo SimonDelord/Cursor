@@ -354,3 +354,4 @@ For deployment issues:
 4. Consult official documentation
 
 🎉 **Congratulations!** You now have a fully functional Debezium MySQL CDC setup!
+

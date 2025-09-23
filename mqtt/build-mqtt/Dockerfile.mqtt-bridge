@@ -1,0 +1,19 @@
+FROM python:3.11-slim
+
+# Install system dependencies for snappy compression
+RUN apt-get update && apt-get install -y \
+    libsnappy-dev \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install required packages
+COPY requirements-mqtt.txt /app/
+WORKDIR /app
+RUN pip install --no-cache-dir -r requirements-mqtt.txt
+
+# Copy bridge application
+COPY kafka-mqtt-bridge.py /app/
+
+# Run the bridge
+CMD ["python", "kafka-mqtt-bridge.py"]
