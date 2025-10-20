@@ -23,7 +23,6 @@
 ### Data Pipeline Architecture
 ```
 MySQL Database → Debezium CDC → Kafka Topics → MQTT Bridge → Real-time Applications
-                                              → InfluxDB → Grafana Dashboards
 ```
 
 ### Key Components
@@ -36,8 +35,7 @@ MySQL Database → Debezium CDC → Kafka Topics → MQTT Bridge → Real-time A
 ### Performance Metrics
 - **Update Frequency**: Every 5 seconds per truck
 - **End-to-End Latency**: ~1-2 seconds from MySQL → MQTT
-- **Data Retention**: Historical data stored in InfluxDB
-- **Monitoring**: Real-time Grafana dashboards
+- **Monitoring**: Real-time monitoring via MQTT topics and logs
 
 ## 🗂️ Site Structure
 
@@ -57,14 +55,13 @@ West Angelas Mining Site/
 - Kubernetes cluster with Strimzi Kafka operator
 - MySQL database with CDC configuration
 - MQTT broker (Mosquitto)
-- Grafana/InfluxDB for monitoring
 
 ### Quick Start
 1. Deploy Kafka and MySQL infrastructure
 2. Configure Debezium CDC connector
 3. Deploy MQTT bridge
 4. Start truck location injection
-5. Monitor via Grafana dashboards
+5. Monitor via MQTT topics and logs
 
 ## 📍 Coordinate System
 

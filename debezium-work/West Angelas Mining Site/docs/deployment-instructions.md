@@ -51,7 +51,7 @@ kubectl logs -n mqtt kafka-mqtt-bridge-pod --tail=20
 
 ### Monitoring Integration
 - ConfigMap with site-specific settings
-- Ready for Grafana dashboard integration
+- Real-time monitoring via MQTT topics
 - Alert configuration for offline trucks and coordinate deviations
 
 ## 🗺️ Route Information

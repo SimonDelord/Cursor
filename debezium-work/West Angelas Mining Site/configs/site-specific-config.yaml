@@ -20,8 +20,6 @@ data:
     
     # Monitoring Configuration
     monitoring.enabled=true
-    monitoring.grafana.enabled=true
-    monitoring.influxdb.enabled=true
     monitoring.alerts.enabled=true
     
     # CDC Configuration
