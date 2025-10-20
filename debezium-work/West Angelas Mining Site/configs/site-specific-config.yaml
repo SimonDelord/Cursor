@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: west-angelas-site-config
+  namespace: debezium-example
+data:
+  site.properties: |
+    # West Angelas Mining Site Configuration
+    site.name=West Angelas Mining Site
+    site.location=Pilbara Region, Western Australia
+    site.timezone=Australia/Perth
+    site.coordinates.center.lat=-23.1732
+    site.coordinates.center.lng=118.7775
+    
+    # Fleet Configuration
+    fleet.active.trucks=2
+    fleet.truck1.route.points=17
+    fleet.truck2.route.points=10
+    fleet.update.interval=5000
+    
+    # Monitoring Configuration
+    monitoring.enabled=true
+    monitoring.grafana.enabled=true
+    monitoring.influxdb.enabled=true
+    monitoring.alerts.enabled=true
+    
+    # CDC Configuration
+    cdc.database=trucks
+    cdc.table=location
+    cdc.topic=realtime.trucks.location
+    cdc.connector=mysql
+    
+    # MQTT Configuration
+    mqtt.broker.host=mosquitto
+    mqtt.broker.port=1883
+    mqtt.topic.prefix=trucks
+    mqtt.qos=1
+    
+  logging.properties: |
+    # Logging configuration for West Angelas site
+    log.level=INFO
+    log.format=JSON
+    log.destination=stdout
+    log.include.coordinates=true
+    log.include.timestamps=true
+    
+  alerts.properties: |
+    # Alert configuration
+    alert.truck.offline.timeout=30000
+    alert.coordinate.deviation.threshold=0.001
+    alert.system.health.check.interval=60000

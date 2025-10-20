@@ -1,0 +1,63 @@
+{
+  "site": {
+    "name": "West Angelas Mining Site",
+    "location": "Pilbara Region, Western Australia",
+    "center_coordinates": {
+      "latitude": -23.1732,
+      "longitude": 118.7775
+    },
+    "elevation": "approximately 400m above sea level"
+  },
+  "truck_routes": {
+    "truck_1": {
+      "id": 1,
+      "description": "Primary mining circuit - 17 waypoints",
+      "route_type": "bidirectional",
+      "total_waypoints": 17,
+      "coordinates": [
+        {"lat": -23.173195, "lng": 118.775248, "index": 0, "description": "Starting point/Main depot"},
+        {"lat": -23.171972, "lng": 118.776257, "index": 1, "description": "North access road"},
+        {"lat": -23.169328, "lng": 118.776407, "index": 2, "description": "Mining area entrance"},
+        {"lat": -23.169407, "lng": 118.778467, "index": 3, "description": "Pit access point"},
+        {"lat": -23.168666, "lng": 118.780200, "index": 4, "description": "Loading zone A"},
+        {"lat": -23.169979, "lng": 118.780498, "index": 5, "description": "Loading zone B"},
+        {"lat": -23.171201, "lng": 118.778673, "index": 6, "description": "Haul road junction"},
+        {"lat": -23.173445, "lng": 118.777502, "index": 7, "description": "Checkpoint Alpha"},
+        {"lat": -23.175506, "lng": 118.778732, "index": 8, "description": "Processing area"},
+        {"lat": -23.175926, "lng": 118.780518, "index": 9, "description": "Stockpile zone"},
+        {"lat": -23.175771, "lng": 118.783375, "index": 10, "description": "Conveyor loading"},
+        {"lat": -23.175734, "lng": 118.787561, "index": 11, "description": "Rail loading facility"},
+        {"lat": -23.174640, "lng": 118.790002, "index": 12, "description": "Eastern boundary"},
+        {"lat": -23.172597, "lng": 118.789923, "index": 13, "description": "Return route point"},
+        {"lat": -23.171520, "lng": 118.789744, "index": 14, "description": "Maintenance checkpoint"},
+        {"lat": -23.173195, "lng": 118.775248, "index": 15, "description": "Return to depot"},
+        {"lat": -23.174019, "lng": 118.773752, "index": 16, "description": "Final approach"}
+      ]
+    },
+    "truck_2": {
+      "id": 2,
+      "description": "Secondary mining circuit - 10 waypoints",
+      "route_type": "bidirectional", 
+      "total_waypoints": 10,
+      "coordinates": [
+        {"lat": -23.173195, "lng": 118.775248, "index": 0, "description": "Shared depot"},
+        {"lat": -23.174019, "lng": 118.773752, "index": 1, "description": "South access road"},
+        {"lat": -23.174822, "lng": 118.773097, "index": 2, "description": "Secondary pit entrance"},
+        {"lat": -23.174859, "lng": 118.771232, "index": 3, "description": "Overburden area"},
+        {"lat": -23.173600, "lng": 118.770974, "index": 4, "description": "Waste dump access"},
+        {"lat": -23.172177, "lng": 118.771728, "index": 5, "description": "Service road junction"},
+        {"lat": -23.170919, "lng": 118.772601, "index": 6, "description": "Equipment staging"},
+        {"lat": -23.169149, "lng": 118.773018, "index": 7, "description": "Fuel station"},
+        {"lat": -23.167672, "lng": 118.773355, "index": 8, "description": "West boundary"},
+        {"lat": -23.166449, "lng": 118.773692, "index": 9, "description": "Turnaround point"}
+      ]
+    }
+  },
+  "operational_info": {
+    "update_frequency": "5 seconds",
+    "precision": "8 decimal places (~1mm accuracy)",
+    "coordinate_system": "WGS84",
+    "active_monitoring": true,
+    "last_updated": "2025-10-20"
+  }
+}
